@@ -1,0 +1,337 @@
+import pygame
+import random
+
+# Initialize Pygame
+pygame.init()
+
+# Screen dimensions
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Frogger")
+
+# Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
+
+# Clock
+clock = pygame.time.Clock()
+FPS = 60
+
+# Frog settings
+frog_size = 50
+frog_x = SCREEN_WIDTH // 2
+frog_y = SCREEN_HEIGHT - frog_size
+frog_speed = 10
+
+# Car settings
+car_width = 50
+car_height = 50
+initial_car_speed = 5
+cars = []
+
+# Generate initial cars
+def generate_cars(num_lanes, cars_per_lane):
+    car_list = []
+    lane_height = SCREEN_HEIGHT // num_lanes
+    for lane in range(num_lanes):
+        for _ in range(cars_per_lane):
+            car_x = random.randint(0, SCREEN_WIDTH - car_width)
+            car_y = lane * lane_height + random.randint(-300, -50)
+            car_speed = initial_car_speed + lane  # Different speed for different lanes
+            car_direction = 1 if lane % 2 == 0 else -1  # Alternate direction
+            car_list.append([car_x, car_y, car_speed * car_direction])
+    return car_list
+
+# Draw frog
+def draw_frog(x, y):
+    pygame.draw.rect(screen, GREEN, [x, y, frog_size, frog_size])
+
+# Draw cars
+def draw_cars(car_list):
+    for car in car_list:
+        pygame.draw.rect(screen, RED if car[2] > 0 else BLUE, [car[0], car[1], car_width, car_height])
+
+# Move cars
+def move_cars(car_list):
+    for car in car_list:
+        car[0] += car[2]
+        if car[0] > SCREEN_WIDTH:
+            car[0] = -car_width
+        elif car[0] < -car_width:
+            car[0] = SCREEN_WIDTH
+
+# Check collision
+def check_collision(frog_x, frog_y, cars):
+    for car in cars:
+        if (frog_x < car[0] + car_width and
+            frog_x + frog_size > car[0] and
+            frog_y < car[1] + car_height and
+            frog_y + frog_size > car[1]):
+            return True
+    return False
+
+# Main game loop
+def game_loop():
+    global frog_x, frog_y, initial_car_speed
+
+    level = 1
+    score = 0
+    cars_per_lane = 2
+    num_lanes = 5
+    cars = generate_cars(num_lanes, cars_per_lane)
+    running = True
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT] and frog_x > 0:
+            frog_x -= frog_speed
+        if keys[pygame.K_RIGHT] and frog_x < SCREEN_WIDTH - frog_size:
+            frog_x += frog_speed
+        if keys[pygame.K_UP] and frog_y > 0:
+            frog_y -= frog_speed
+        if keys[pygame.K_DOWN] and frog_y < SCREEN_HEIGHT - frog_size:
+            frog_y += frog_speed
+
+        # Update the game state
+        screen.fill(WHITE)
+        draw_frog(frog_x, frog_y)
+        move_cars(cars)
+        draw_cars(cars)
+
+        if check_collision(frog_x, frog_y, cars):
+            running = False
+
+        if frog_y <= 0:
+            score += 100
+            frog_x = SCREEN_WIDTH // 2
+            frog_y = SCREEN_HEIGHT - frog_size
+            initial_car_speed += 1
+            level += 1
+            cars = generate_cars(num_lanes, cars_per_lane)
+
+        # Display score and level
+        font = pygame.font.SysFont(None, 36)
+        score_text = font.render(f'Score: {score}', True, BLACK)
+        level_text = font.render(f'Level: {level}', True, BLACK)
+        screen.blit(score_text, (10, 10))
+        screen.blit(level_text, (10, 50))
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+    pygame.quit()
+
+# Run the game
+game_loop()
+
+import pygame
+import random
+
+# Initialize Pygame
+pygame.init()
+
+# Screen dimensions
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Frogger")
+
+# Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
+YELLOW = (255, 255, 0)
+
+# Clock
+clock = pygame.time.Clock()
+FPS = 60
+
+# Frog settings
+frog_size = 50
+frog_x = SCREEN_WIDTH // 2
+frog_y = SCREEN_HEIGHT - frog_size
+frog_speed = 10
+invincible = False
+invincible_timer = 0
+
+# Car settings
+car_width = 50
+car_height = 50
+initial_car_speed = 5
+cars = []
+
+# Power-up settings
+power_up_size = 30
+power_up_spawn_time = 200  # Time in frames to spawn a power-up
+power_up_duration = 300    # Duration in frames of power-up effect
+power_ups = []
+
+# Player settings
+score = 0
+level = 1
+lives = 3
+
+# Sounds
+collision_sound = pygame.mixer.Sound('collision.wav')
+level_up_sound = pygame.mixer.Sound('level_up.wav')
+power_up_sound = pygame.mixer.Sound('power_up.wav')
+
+# Generate initial cars
+def generate_cars(num_lanes, cars_per_lane):
+    car_list = []
+    lane_height = SCREEN_HEIGHT // num_lanes
+    for lane in range(num_lanes):
+        for _ in range(cars_per_lane):
+            car_x = random.randint(0, SCREEN_WIDTH - car_width)
+            car_y = lane * lane_height + random.randint(-300, -50)
+            car_speed = initial_car_speed + lane  # Different speed for different lanes
+            car_direction = 1 if lane % 2 == 0 else -1  # Alternate direction
+            car_list.append([car_x, car_y, car_speed * car_direction])
+    return car_list
+
+# Generate power-up
+def generate_power_up():
+    x = random.randint(0, SCREEN_WIDTH - power_up_size)
+    y = random.randint(0, SCREEN_HEIGHT - power_up_size)
+    return [x, y]
+
+# Draw frog
+def draw_frog(x, y):
+    pygame.draw.rect(screen, GREEN, [x, y, frog_size, frog_size])
+
+# Draw cars
+def draw_cars(car_list):
+    for car in car_list:
+        pygame.draw.rect(screen, RED if car[2] > 0 else BLUE, [car[0], car[1], car_width, car_height])
+
+# Draw power-ups
+def draw_power_ups(power_up_list):
+    for power_up in power_up_list:
+        pygame.draw.rect(screen, YELLOW, [power_up[0], power_up[1], power_up_size, power_up_size])
+
+# Move cars
+def move_cars(car_list):
+    for car in car_list:
+        car[0] += car[2]
+        if car[0] > SCREEN_WIDTH:
+            car[0] = -car_width
+        elif car[0] < -car_width:
+            car[0] = SCREEN_WIDTH
+
+# Check collision
+def check_collision(frog_x, frog_y, cars):
+    if invincible:
+        return False
+    for car in cars:
+        if (frog_x < car[0] + car_width and
+            frog_x + frog_size > car[0] and
+            frog_y < car[1] + car_height and
+            frog_y + frog_size > car[1]):
+            return True
+    return False
+
+# Check power-up collection
+def check_power_up_collection(frog_x, frog_y, power_ups):
+    for power_up in power_ups:
+        if (frog_x < power_up[0] + power_up_size and
+            frog_x + frog_size > power_up[0] and
+            frog_y < power_up[1] + power_up_size and
+            frog_y + frog_size > power_up[1]):
+            return True, power_up
+    return False, None
+
+# Main game loop
+def game_loop():
+    global frog_x, frog_y, initial_car_speed, invincible, invincible_timer, lives, score, level
+
+    cars_per_lane = 2
+    num_lanes = 5
+    cars = generate_cars(num_lanes, cars_per_lane)
+    power_up_spawn_counter = 0
+    power_ups = []
+    running = True
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT] and frog_x > 0:
+            frog_x -= frog_speed
+        if keys[pygame.K_RIGHT] and frog_x < SCREEN_WIDTH - frog_size:
+            frog_x += frog_speed
+        if keys[pygame.K_UP] and frog_y > 0:
+            frog_y -= frog_speed
+        if keys[pygame.K_DOWN] and frog_y < SCREEN_HEIGHT - frog_size:
+            frog_y += frog_speed
+
+        # Update the game state
+        screen.fill(WHITE)
+        draw_frog(frog_x, frog_y)
+        move_cars(cars)
+        draw_cars(cars)
+        draw_power_ups(power_ups)
+
+        if check_collision(frog_x, frog_y, cars):
+            collision_sound.play()
+            lives -= 1
+            if lives == 0:
+                running = False
+            frog_x = SCREEN_WIDTH // 2
+            frog_y = SCREEN_HEIGHT - frog_size
+
+        if frog_y <= 0:
+            score += 100
+            frog_x = SCREEN_WIDTH // 2
+            frog_y = SCREEN_HEIGHT - frog_size
+            initial_car_speed += 1
+            level += 1
+            level_up_sound.play()
+            cars = generate_cars(num_lanes, cars_per_lane)
+
+        # Handle power-ups
+        collected, power_up = check_power_up_collection(frog_x, frog_y, power_ups)
+        if collected:
+            power_up_sound.play()
+            power_ups.remove(power_up)
+            invincible = True
+            invincible_timer = power_up_duration
+
+        if invincible:
+            invincible_timer -= 1
+            if invincible_timer <= 0:
+                invincible = False
+
+        # Spawn power-ups
+        power_up_spawn_counter += 1
+        if power_up_spawn_counter >= power_up_spawn_time:
+            power_ups.append(generate_power_up())
+            power_up_spawn_counter = 0
+
+        # Display score, level, and lives
+        font = pygame.font.SysFont(None, 36)
+        score_text = font.render(f'Score: {score}', True, BLACK)
+        level_text = font.render(f'Level: {level}', True, BLACK)
+        lives_text = font.render(f'Lives: {lives}', True, BLACK)
+        screen.blit(score_text, (10, 10))
+        screen.blit(level_text, (10, 50))
+        screen.blit(lives_text, (10, 90))
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+    pygame.quit()
+
+# Run the game
+game_loop()
